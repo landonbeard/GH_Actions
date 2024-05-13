@@ -65,9 +65,6 @@ jobs:
   package-for-platform:
     runs-on: ubuntu-latest
     needs: build-and-package
-    strategy:
-      matrix:
-        platform: [linux, win]
     steps:
       - name: Download Packaged App
         uses: actions/download-artifact@v3
@@ -82,14 +79,30 @@ jobs:
 
       - name: Install Dependencies
         run: npm install --production
+        working-directory: ${{ github.workspace }}
 
-      - name: Package for Current Platform
-        run: npm run dist:${{ matrix.platform }}
+      - name: Package for Windows
+        if: runner.os == 'windows'
+        run: npm run dist:win
+
+      - name: Package for macOS
+        if: runner.os == 'macos'
+        run: npm run dist:mac
+
+      - name: Package for Linux
+        if: runner.os == 'linux'
+        run: npm run dist:linux
 
       - name: Archive Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: packaged-${{ matrix.platform }}
+          name: packaged-app-platform
+          path: dist/
+
+      - name: Upload result
+        uses: actions/upload-artifact@v2
+        with:
+          name: package-for-platform-result
           path: dist/
 
 
